@@ -1,0 +1,11 @@
+#CAPTCHA, lockout, rate-limiting, TOTP, pepper
+config:
+  hash:
+  pass_level:
+protection:
+  captcha: false
+  lockout: false
+  rate-limit: false
+  TOTP: false
+
+  
