@@ -1,7 +1,7 @@
 GROUP_SEED = 313131
 
 from flask import Flask, request, jsonify
-from dbhandler import create_db, get_data, stor_data, select_all, view_users
+from dbhandler import create_db, get_data, stor_data
 from encryption import hash_password, verify_password
 from util import *
 import sqlite3, json, time
@@ -10,9 +10,6 @@ import sqlite3, json, time
 app = Flask(__name__)
 
 HASH = ""
-
-
-USERS = {"moriya": "abab"}
 
 def register_user(username, password):
     salt = None
@@ -32,12 +29,8 @@ def init_register():
         register_user(username, password)
 
 init_register()
-#print(get_data("root"))
-select_all()
-#view_users()
+
             
-
-
 @app.route('/')
 def home():
     return "Welcom."
@@ -100,6 +93,7 @@ def log(timestamp, usernmae, hash, protections, result, latency):
 if __name__ == "__main__":
     app.run()
     
+
 
 
 
