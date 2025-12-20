@@ -1,0 +1,128 @@
+{
+    "weakPasswords": [
+        {
+            "username": "root",
+            "password" : "root"
+        },
+        {
+            "username": "david",
+            "password" : "12345"
+        },
+        {
+            "username": "moriya",
+            "password" : "abab"
+        },
+        {
+            "username": "charlie",
+            "password" : "67676"
+        },
+        {
+            "username": "georgia",
+            "password" : "11111"
+        },
+        {
+            "username": "jack",
+            "password" : "9876"
+        },
+        {
+            "username": "rachel",
+            "password" : "1928"
+        },
+        {
+            "username": "tina",
+            "password" : "anit"
+        },
+        {
+            "username": "dany",
+            "password" : "ddddd"
+        },
+        {
+            "username": "mina",
+            "password" : "2025"
+        }
+    ],
+    "mediumPasswords": [
+        {
+            "username": "william",
+            "password" : "qwe123"
+        },
+        {
+            "username": "benjamin",
+            "password" : "ben789"
+        },
+        {
+            "username": "lily",
+            "password" : "3684022"
+        },
+        {
+            "username": "yuval",
+            "password" : "yu1414"
+        },
+        {
+            "username": "shir",
+            "password" : "s08642"
+        },
+        {
+            "username": "zoe",
+            "password" : "9876zoe"
+        },
+        {
+            "username": "ryen",
+            "password" : "asdfghj"
+        },
+        {
+            "username": "christopher",
+            "password" : "4567ch"
+        },
+        {
+            "username": "michael",
+            "password" : "micabab"
+        },
+        {
+            "username": "leo",
+            "password" : "abcdleo"
+        }
+    ],
+    "strongPasswords": [
+        {
+            "username": "admin",
+            "password" : "A26f3yjP9"
+        },
+        {
+            "username": "jeremy",
+            "password" : "8hwIn053"
+        },
+        {
+            "username": "mark",
+            "password" : "r63YoN3w1"
+        },
+        {
+            "username": "jason",
+            "password" : "P04g2w9m"
+        },
+        {
+            "username": "kevin",
+            "password" : "0VuB2M07"
+        },
+        {
+            "username": "andrew",
+            "password" : "9mfC7zp2E"
+        },
+        {
+            "username": "jill",
+            "password" : "L0m32bf4"
+        },
+        {
+            "username": "liam",
+            "password" : "3ouD8F5sp"
+        },
+        {
+            "username": "steven",
+            "password" : "Z6p2k5J2g"
+        },
+        {
+            "username": "rome",
+            "password" : "i5QoPb27d"
+        }
+    ]
+}
