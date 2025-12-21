@@ -4,34 +4,40 @@ import bcrypt, hashlib, os
 def_hash = PasswordHasher(time_cost=1, memory_cost=65536, parallelism=1)
 
 
-def hash_password(password, hash):
+def hash_password(password, method, use_salt=False):
 
-    if hash == "sha256":
-        salt = os.urandom(16)
-        return salt, hashlib.sha256(salt + password.encode()).hexdigest()
+    if method == "sha256":
+        if use_salt:
+            salt = os.urandom(16)
+            # Return hash and hex-encoded salt for storage
+            return hashlib.sha256(salt + password.encode()).hexdigest(), salt.hex()
+        return hashlib.sha256(password.encode()).hexdigest()
     
-    elif hash == "bcrypt":
-        return bcrypt.hashpw(password.encode() + bcrypt.gensalt(rounds=12))
+    elif method == "bcrypt":
+        # bcrypt.hashpw returns bytes; decode to string for storage
+        hashed = bcrypt.hashpw(password.encode(), bcrypt.gensalt(rounds=12))
+        return hashed.decode('utf-8')
     
-    elif hash == "argon2id":
+    elif method == "argon2id":
         return def_hash.hash(password)
     
     else:
         return password
-        
-    
 
-def verify_password(password, stored_hash, hash, salt=None):
-    if hash == "sha256":
-        return hashlib.sha256(salt + password.encode()).hexdigest() == stored_hash
+def verify_password(password, stored_hash, method, salt=None):
+    if method == "sha256":
+        if not salt:
+            return hashlib.sha256(password.encode()).hexdigest() == stored_hash
+        # Convert hex salt back to bytes
+        salt_bytes = bytes.fromhex(salt)
+        return hashlib.sha256(salt_bytes + password.encode()).hexdigest() == stored_hash
     
-    elif hash == "bcrypt":
-        return bcrypt.checkpw(password.encode(), stored_hash) 
+    elif method == "bcrypt":
+        return bcrypt.checkpw(password.encode(), stored_hash.encode('utf-8')) 
     
-    elif hash == "argno2id":
+    elif method == "argon2id":
         try:
-            def_hash.verify(password)
-            return True
+            return def_hash.verify(stored_hash, password)
         except:
             return False
         

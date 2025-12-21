@@ -1,7 +1,7 @@
 from flask import Flask, render_template, redirect, url_for, request, flash
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
-from werkzeug.security import generate_password_hash, check_password_hash
+import encryption
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'your-very-secret-key'
@@ -16,13 +16,15 @@ class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(100), unique=True)
     password = db.Column(db.String(256), nullable=False)
-    
-    def set_password(self, password):
-        
-        self.password = generate_password_hash(password,method = "pbkdf2:sha256")
+    #salt = db.Column(db.String(256), nullable=True)
+    method = db.Column(db.String(50), nullable=True)
+     
+    def set_password(self, password, method='sha256'):
+        self.method = method
+        self.password = encryption.hash_password(password, method)
 
     def check_password(self, password):
-        return check_password_hash(self.password, password)
+        return encryption.verify_password(password, self.password, self.method)
 
 
 
@@ -55,7 +57,7 @@ def register():
 def login():
     if request.method == 'POST':
         user = User.query.filter_by(username=request.form.get('username')).first()
-        if user and check_password_hash(user.password, request.form.get('password')):
+        if user and user.check_password(request.form.get('password')):
             login_user(user)
             return redirect(url_for('dashboard'))
         flash('Invalid credentials')
@@ -73,6 +75,4 @@ def logout():
     return redirect(url_for('login'))
 
 if __name__ == '__main__':
-    with app.app_context():
-        db.create_all()
     app.run(debug=True)

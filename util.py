@@ -31,4 +31,7 @@ def users_list():
     return users
 
 
-            
+def log_attempt(data,log_file=""):
+    with open(log_file, "a", encoding="utf-8") as f:
+        json.dump(data, f)
+        f.write("\n")         
