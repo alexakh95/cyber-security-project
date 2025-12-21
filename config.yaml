@@ -2,6 +2,8 @@
 config:
   hash:
   pass_level:
+  salt: 
+  pepper:
 protection:
   captcha: false
   lockout: false
