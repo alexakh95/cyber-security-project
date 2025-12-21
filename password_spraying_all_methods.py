@@ -1,5 +1,4 @@
 from app import app, db, User
-import password_spraying as ps
 import util
 import multiprocessing
 import time
@@ -10,9 +9,7 @@ import requests
 LOGIN_URL = "http://127.0.0.1:5000/login"
 USERS = util.users_list()
 
-#hash_list = ["pbkdf2:sha256","bcrypt","argon2id"]
-
-hash_list = ["pbkdf2:sha256"]
+hash_list = ["pbkdf2:sha256","bcrypt","argon2id"]
 
 def run_server():
     # Run without debug/reloader to avoid subprocess issues
@@ -72,7 +69,7 @@ if __name__ == '__main__':
         
         try:
             # Run the attack script
-            ps.password_spraying(hash_method)
+            password_spraying(hash_method)
         except Exception as e:
             print(f"An error occurred during spraying: {e}")
         
