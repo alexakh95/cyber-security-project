@@ -1,4 +1,5 @@
 #CAPTCHA, lockout, rate-limiting, TOTP, pepper
+
 config:
   hash:
   pass_level:
@@ -9,5 +10,5 @@ protection:
   lockout: false
   rate-limit: false
   TOTP: false
-
+GROUP_SEED: 114467408
   
