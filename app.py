@@ -1,9 +1,9 @@
 from flask import Flask, render_template, redirect, url_for, request, flash
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
-import encryption
-from collections import defaultdict
-import yaml
+import encryption, protection
+import yaml, util
+import time
 from datetime import datetime, timedelta
 
 #open config file
@@ -15,8 +15,6 @@ HASH_METHOD = APP_CONFIG["config"]["hash"]
 SALT = APP_CONFIG["config"]["salt"]
 PEPPER = APP_CONFIG["config"]["pepper"]
 PROTECTION = APP_CONFIG["protection"]
-
-login_attempts = defaultdict(list)
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'your-very-secret-key'
@@ -31,6 +29,11 @@ class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(100), unique=True)
     password = db.Column(db.String(256), nullable=False)
+    
+    
+    failed_login_attempts = db.Column(db.Integer, default=0)
+    locked_until = db.Column(db.DateTime, nullable=True)
+    
     if SALT:
         salt = db.Column(db.String(256), nullable=True)
      
@@ -40,6 +43,10 @@ class User(UserMixin, db.Model):
     def check_password(self, password,method = ""):
         return encryption.verify_password(password, self.password, method= method)
 
+    def is_locked(self):
+        if self.locked_until and self.locked_until > datetime.utcnow():
+            return True
+        return False
 
 
 @login_manager.user_loader
@@ -67,38 +74,32 @@ def register():
 
     return render_template('register.html')
 
+
+    
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
         username = request.form.get('username')
         ip = request.remote_addr
-
+        start = time.perf_counter()
+        
         #rate limit-protection
         if PROTECTION["rate-limit"]:
-            now = datetime.utcnow()
-            login_attempts [ip] = [
-                t for t in login_attempts[ip]
-                if now - t < timedelta(seconds=60)
-            ]
-
-            if len(login_attempts[ip]) >= 10:
-                flash("Too many attempts, slow down")
+            if not protection.check_rate_limit(ip):
+                util.log_security_event(username=username,result='fail',latency_ms= (time.perf_counter() - start) * 1000)
+                flash("Too many attempts, please wait.")
                 return render_template('login.html')
-
-            login_attempts[ip].append(now)
         
-        user = User.query.filter_by(username=request.form.get('username')).first()
+        user = User.query.filter_by(username=username).first()
         
         #TOTP protection that comes after successful password verification
         if user and user.check_password(request.form.get('password')):
             if PROTECTION["TOTP"]:
                 flash("TOTP required (not implemented)")
                 return render_template('login.html')
-            
             login_user(user)
             return redirect(url_for('dashboard'))
         flash('Invalid credentials')
-        
         
     return render_template('login.html')
 
@@ -115,6 +116,19 @@ def dashboard():
 def logout():
     logout_user()
     return redirect(url_for('login'))
+
+def init_db():
+    with app.app_context():
+        db.create_all()  # Creates the .db file and tables
+        
+        user_list = util.users_pass_list()
+        for username, password in user_list.keys():
+            new_user = User(username=username)
+            new_user.set_password(password, method=HASH_METHOD)
+            
+        db.session.add(new_user)
+        db.session.commit()
+        
 
 if __name__ == '__main__':
     app.run(debug=True)
