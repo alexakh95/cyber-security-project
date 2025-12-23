@@ -1,5 +1,8 @@
 #CAPTCHA, lockout, rate-limiting, TOTP, pepper
 
+attack:
+  bruteforce:
+  passwordspraying:
 config:
   hash:
   pass_level:
