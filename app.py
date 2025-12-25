@@ -30,18 +30,19 @@ class User(UserMixin, db.Model):
     username = db.Column(db.String(100), unique=True)
     password = db.Column(db.String(256), nullable=False)
     
-    
     failed_login_attempts = db.Column(db.Integer, default=0)
     locked_until = db.Column(db.DateTime, nullable=True)
-    
-    if SALT:
-        salt = db.Column(db.String(256), nullable=True)
+        
+    salt = db.Column(db.String(256), nullable=True)
      
-    def set_password(self, password,method = ""):
-        self.password = encryption.hash_password(password, method=method)
+    def set_password(self, password):
+        if SALT:
+            self.password, self.salt = encryption.hash_password(password, method=HASH_METHOD,use_salt=SALT)
+        else:
+            self.password = encryption.hash_password(password,method=HASH_METHOD)
 
-    def check_password(self, password,method = ""):
-        return encryption.verify_password(password, self.password, method= method)
+    def check_password(self, password):
+        return encryption.verify_password(password, self.password, method= HASH_METHOD)
 
     def is_locked(self):
         if self.locked_until and self.locked_until > datetime.utcnow():
@@ -119,15 +120,16 @@ def logout():
 
 def init_db():
     with app.app_context():
+        db.drop_all() # Clear previous data
         db.create_all()  # Creates the .db file and tables
         
         user_list = util.users_pass_list()
-        for username, password in user_list.keys():
+        for username, password in user_list:
             new_user = User(username=username)
-            new_user.set_password(password, method=HASH_METHOD)
+            new_user.set_password(password)
             
-        db.session.add(new_user)
-        db.session.commit()
+            db.session.add(new_user)
+            db.session.commit()
         
 
 if __name__ == '__main__':
