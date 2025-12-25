@@ -5,7 +5,7 @@ from datetime import datetime
 with open("config.yaml", "r") as f:
     APP_CONFIG = yaml.safe_load(f)
 
-GROUP_SEED = APP_CONFIG["group_seed"]
+GROUP_SEED = APP_CONFIG["GROUP_SEED"]
 HASH_METHOD = APP_CONFIG["config"]["hash"]
 SALT = APP_CONFIG["config"]["salt"]
 PEPPER = APP_CONFIG["config"]["pepper"]
@@ -21,10 +21,10 @@ def users_pass_list():
 
     for catigory, user_list in data.items():
         for user in user_list:
-            users.append({
-                "username": user['username'],
-                "password": user['password']
-            })
+            users.append(
+                 (user['username'],
+                 user['password'])
+            )
 
     return users
 
