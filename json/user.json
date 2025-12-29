@@ -1,58 +1,61 @@
 {
-    "weakPasswords": [
+    "weak": [
         {
             "username": "root",
             "password" : "root"
         },
         {
             "username": "david",
-            "password" : "12345"
+            "password" : "12345",
+            "totp_secret" : "OVDFWAGJCF3WJSSRQJXWBFYOGEWAXXBZ"
         },
         {
             "username": "moriya",
-            "password" : "abab"
+            "password" : "password"
         },
         {
             "username": "charlie",
-            "password" : "67676"
+            "password" : "pizza"
         },
         {
             "username": "georgia",
-            "password" : "11111"
+            "password" : "11111",
+            "totp_secret" : "QVXN42O2OZJ4NYIXFIRYA44XTO27PEIZ"
         },
         {
             "username": "jack",
-            "password" : "9876"
+            "password" : "cat"
         },
         {
             "username": "rachel",
-            "password" : "1928"
+            "password" : "love"
         },
         {
             "username": "tina",
-            "password" : "anit"
+            "password" : "123456"
         },
         {
             "username": "dany",
-            "password" : "ddddd"
+            "password" : "000000"
         },
         {
             "username": "mina",
             "password" : "2025"
         }
     ],
-    "mediumPasswords": [
+    "medium": [
         {
             "username": "william",
-            "password" : "qwe123"
+            "password" : "123will"
         },
         {
             "username": "benjamin",
-            "password" : "ben789"
+            "password" : "ben789",
+            "totp_secret": "ETQC2PWANZMMNIPHEGTBEOW2CY3JTLPB"
         },
         {
             "username": "lily",
-            "password" : "3684022"
+            "password" : "l68522"
         },
         {
             "username": "yuval",
@@ -64,11 +67,12 @@
         },
         {
             "username": "zoe",
-            "password" : "9876zoe"
+            "password" : "987zoe",
+            "totp_secret": "SXKX62BCBSRQYIMFCY6Z3HWLF43NZWSQ"
         },
         {
             "username": "ryen",
-            "password" : "asdfghj"
+            "password" : "ryen25"
         },
         {
             "username": "christopher",
@@ -76,17 +80,18 @@
         },
         {
             "username": "michael",
-            "password" : "micabab"
+            "password" : "mica000"
         },
         {
             "username": "leo",
-            "password" : "abcdleo"
+            "password" : "leo211"
         }
     ],
-    "strongPasswords": [
+    "strong": [
         {
             "username": "admin",
-            "password" : "A26f3yjP9"
+            "password" : "A26f3yjP9",
+            "totp_secret": "PNPILHPRMVA37VY4GH5N3NY5TLQM466N"
         },
         {
             "username": "jeremy",
@@ -102,7 +107,8 @@
         },
         {
             "username": "kevin",
-            "password" : "0VuB2M07"
+            "password" : "0VuB2M07",
+            "totp_secret": "WHDZ2VMN62ZHY3IXO7HLMWX5RY2JMIJY"
         },
         {
             "username": "andrew",
