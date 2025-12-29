@@ -86,8 +86,8 @@ def login():
         
         #rate limit-protection
         if PROTECTION["rate-limit"]:
-            if not protection.check_rate_limit(ip):
-                util.log_security_event(username=username,result='fail',latency_ms= (time.perf_counter() - start) * 1000)
+            if not protection.check_rate_limit(username):
+                util.log_security_event(username=username,result='blocked',latency_ms= (time.perf_counter() - start) * 1000)
                 flash("Too many attempts, please wait.")
                 return render_template('login.html')
         
@@ -98,8 +98,18 @@ def login():
             if PROTECTION["TOTP"]:
                 flash("TOTP required (not implemented)")
                 return render_template('login.html')
-            login_user(user)
+            # CALCULATE LATENCY FOR SUCCESS
+            latency = (time.perf_counter() - start) * 1000
+            
+            # --- SUCCESS LOGGING ---
+            util.log_security_event(username=username, result='success', latency_ms=latency)
+            
             return redirect(url_for('dashboard'))
+        flash('Invalid credentials')
+        
+        # 4. FAILURE PATH
+        latency = (time.perf_counter() - start) * 1000
+        util.log_security_event(username=username, result='fail', latency_ms=latency)
         flash('Invalid credentials')
         
     return render_template('login.html')
@@ -132,5 +142,3 @@ def init_db():
             db.session.commit()
         
 
-if __name__ == '__main__':
-    app.run(debug=True)
