@@ -43,7 +43,15 @@ def users_list():
     return users
 
 def log_security_event(username,result,latency_ms):
-    filename = f"json_logs/logs_{HASH_METHOD}_{PROTECTION}_{ATTACK}.json"
+    for key, val in PROTECTION.items():
+        if val :
+            protect_type = key
+    
+    for key, val in ATTACK.items():
+        if val :
+            attack_type = key
+            
+    filename = f"json_logs/logs_{HASH_METHOD}_{protect_type}_{attack_type}.json"
     
     log_entry = {
             "timestamp": datetime.utcnow().isoformat() + "Z",
@@ -51,7 +59,7 @@ def log_security_event(username,result,latency_ms):
             "result":result,
             "latency_ms": latency_ms,
             "hash_mode": HASH_METHOD,
-            "prot_flag": PROTECTION,
+            "prot_flag": protect_type,
             "group_seed": GROUP_SEED
         }
     
