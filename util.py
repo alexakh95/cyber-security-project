@@ -1,9 +1,20 @@
-import itertools, string, random, json
+import itertools, string, random, json, yaml
+from datetime import datetime
 
+#open config file
+with open("config.yaml", "r") as f:
+    APP_CONFIG = yaml.safe_load(f)
 
-MAX_PASS = 300000
+GROUP_SEED = APP_CONFIG["GROUP_SEED"]
+HASH_METHOD = APP_CONFIG["config"]["hash"]
+SALT = APP_CONFIG["config"]["salt"]
+PEPPER = APP_CONFIG["config"]["pepper"]
+PROTECTION = APP_CONFIG["protection"]
+ATTACK = APP_CONFIG["attack"]
 
+MAX_PASS = 100000
 
+#getting from json file the user's name and password.
 def users_pass_list():
     with open("json/user.json", "r") as f:
         data = json.load(f)
@@ -12,14 +23,26 @@ def users_pass_list():
 
     for catigory, user_list in data.items():
         for user in user_list:
-            users.append({
+            user_entry = {
                 "username": user['username'],
-                "password": user['password']
-            })
-
+                "password": user['password'],
+            }
+            users.append(user_entry)
     return users
 
+#getting the user's totp secret key if the is.
+def get_secret_key(username, category):
+    with open("json/user.json", "r") as f:
+        data = json.load(f)
 
+    users = data[category]
+
+    for user in users:
+        if user['username'] == username:
+            return user['totp_secret'] if 'totp_secret' in user else None 
+    
+
+#getting list of users from json file base on the strength of the passwords.
 def users_list(category):
     with open("json/user.json", "r") as f:
         data = json.load(f)
@@ -34,7 +57,7 @@ def users_list(category):
             )
     return users
 
-
+#creting a passowrd list base on the name of the user.
 def med_generate_sequences(file, name, min_length=4, max_length=6):
     name_lower = name.lower()
     count = 0 
@@ -58,14 +81,14 @@ def med_generate_sequences(file, name, min_length=4, max_length=6):
                     f.write(sub + '\n')
                     count += 1
 
-
+#creating a strong password's list. 
 def rand_generate_sequences(file):
     length = random.choice([8, 9])
 
     characters = string.ascii_letters + string.digits
 
     with open(file, "w") as f:
-        for i in range(100000):
+        for i in range(MAX_PASS):
             random_text = ''.join(random.choice(characters) for _ in range(length))
             f.write(random_text + '\n')
 
@@ -75,4 +98,29 @@ def generate_sequences(type, file, name=None, min_len=None):
         med_generate_sequences(file, name, min_len)
     else:
         rand_generate_sequences(file)
+
+
+def log_security_event(username,result,latency_ms):
+    for key, val in PROTECTION.items():
+        if val :
+            protect_type = key
+    
+    for key, val in ATTACK.items():
+        if val :
+            attack_type = key
+            
+    filename = f"json_logs/logs_{HASH_METHOD}_{protect_type}_{attack_type}.json"
+    
+    log_entry = {
+            "timestamp": datetime.utcnow().isoformat() + "Z",
+            "username": username,
+            "result":result,
+            "latency_ms": latency_ms,
+            "hash_mode": HASH_METHOD,
+            "prot_flag": protect_type,
+            "group_seed": GROUP_SEED
+        }
+    
+    with open(filename, "a") as f:
+        f.write(json.dumps(log_entry) + "\n")
        
