@@ -1,21 +1,21 @@
 import pyotp,time
 
 
-
 #creating a secret token for user.
 def creat_secret_token():
     return pyotp.random_base32()
 
+#generating token based on the user's secret token.
+def generate_token(secrec_token):
+    totp = pyotp.TOTP(secrec_token)
+    return totp.now()
+
 
 #veryfying the token to mache the user.
-def veryfy_totp(username, totp_token):
-    token = pyotp.TOTP("user_token")
+def veryfy_totp(secret_token, totp_token):
+    token = pyotp.TOTP(secret_token)
     return token.verify(totp_token)
 
-#generating token based on the user's secret token.
-def generate_token(username):
-    totp = pyotp.TOTP("get the user's secret token")
-    return totp.now()
 
 #generating token based on the user's secret token with tome shiftting.
 def generate_token_with_time_shift(totp_secret, time_shift):
@@ -39,7 +39,7 @@ def verify_totp_with_sync(secret, token, window=1):
 
 
 #testing to see the sync of the server.
-shift = 47 
+shift = 46
 secret = creat_secret_token()
 token = generate_token_with_time_shift(secret, shift)
 

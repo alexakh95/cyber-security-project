@@ -1,7 +1,18 @@
-from flask import Flask, render_template, redirect, url_for, request, flash
+from flask import Flask, render_template, redirect, url_for, request, flash, session
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
-from werkzeug.security import generate_password_hash, check_password_hash
+import encryption, protection, multiprocessing, yaml, util, totp, time
+from datetime import datetime, timedelta
+
+#open config file
+with open("config.yaml", "r") as f:
+    APP_CONFIG = yaml.safe_load(f)
+
+#initialize the web server with the config file
+
+
+
+PROTECTION = APP_CONFIG["protection"]
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'your-very-secret-key'
@@ -17,13 +28,21 @@ class User(UserMixin, db.Model):
     username = db.Column(db.String(100), unique=True)
     password = db.Column(db.String(256), nullable=False)
     
-    def set_password(self, password):
+    failed_login_attempts = db.Column(db.Integer, default=0)
+    locked_until = db.Column(db.DateTime, nullable=True)
         
-        self.password = generate_password_hash(password,method = "pbkdf2:sha256")
-
+    salt = db.Column(db.String(256), nullable=True)
+     
+    def set_password(self, password):
+        self.password, self.salt = encryption.hash_password(password)
+        
     def check_password(self, password):
-        return check_password_hash(self.password, password)
+        return encryption.verify_password(password, self.password)
 
+    def is_locked(self):
+        if self.locked_until and self.locked_until > datetime.utcnow():
+            return True
+        return False
 
 
 @login_manager.user_loader
@@ -51,15 +70,69 @@ def register():
 
     return render_template('register.html')
 
+
+    
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
-        user = User.query.filter_by(username=request.form.get('username')).first()
-        if user and check_password_hash(user.password, request.form.get('password')):
+        username = request.form.get('username')
+        ip = request.remote_addr
+        start = time.perf_counter()
+        
+        #rate limit-protection
+        if PROTECTION["rate-limit"]:
+            if not protection.check_rate_limit(username):
+                util.log_security_event(username=username,result='blocked',latency_ms= (time.perf_counter() - start) * 1000)
+                flash("Too many attempts, please wait.")
+                return render_template('login.html'), 429 
+        
+        user = User.query.filter_by(username=username).first()
+        
+        #TOTP protection that comes after successful password verification
+        if user and user.check_password(request.form.get('password')):
+            totp_secret = util.get_secret_key(username)
+            if PROTECTION["TOTP"] and totp_secret:
+                flash("TOTP required")
+                session['totp_secret'] = totp_secret #Storing the secret TOTP to use in the login_totp.
+                session['username'] = username
+                session['start'] = start
+                return redirect(url_for('login_totp')), 500
+            # CALCULATE LATENCY FOR SUCCESS
+            latency = (time.perf_counter() - start) * 1000
+            
+            # --- SUCCESS LOGGING ---
+            util.log_security_event(username=username, result='success', latency_ms=latency)
             login_user(user)
             return redirect(url_for('dashboard'))
         flash('Invalid credentials')
+        
+        # 4. FAILURE PATH
+        latency = (time.perf_counter() - start) * 1000
+        util.log_security_event(username=username, result='fail', latency_ms=latency)
+        flash('Invalid credentials')
+        
     return render_template('login.html')
+
+
+@app.route('/login_totp', methods=['GET', 'POST'])
+def login_totp():
+    if request.method == 'POST':
+        username = session.get('username')
+
+        #Check if the TOTP token is valid
+        result = totp.veryfy_totp(session.get('totp_secret'), request.form.get('TOTP_token'))
+        
+        latency = (time.perf_counter() - session.get('start')) * 1000
+
+        if result:
+            util.log_security_event(username=username, result='totp_success', latency_ms=latency)
+            return redirect(url_for('dashboard')), 200
+        
+        util.log_security_event(username=username,result='totp_fail',latency_ms= latency)
+        flash('Invalid credentials')
+
+    return render_template('login.html'), 501
+
 
 @app.route('/dashboard')
 @login_required
@@ -72,7 +145,27 @@ def logout():
     logout_user()
     return redirect(url_for('login'))
 
-if __name__ == '__main__':
+def init_db():
     with app.app_context():
-        db.create_all()
-    app.run(debug=True)
+        db.drop_all() # Clear previous data
+        db.create_all()  # Creates the .db file and tables
+        
+        user_list = util.users_pass_list()
+        for username, password in user_list:
+            new_user = User(username=username)
+            new_user.set_password(password)
+            
+            db.session.add(new_user)
+            db.session.commit()
+        
+def run_server():
+    app.run(debug=False, use_reloader=False)
+
+
+if __name__ == '__main__':
+
+        # initiate the database with the configuration
+        init_db()
+        # Start server in a separate process
+        server_process = multiprocessing.Process(target=run_server)
+        server_process.start()

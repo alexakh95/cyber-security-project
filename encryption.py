@@ -1,43 +1,86 @@
 from argon2 import PasswordHasher
 import bcrypt, hashlib, os
+import yaml
+from dotenv import load_dotenv
+load_dotenv()
 
-#default parameters for Argon2id.
+with open("config.yaml", "r") as f:
+    APP_CONFIG = yaml.safe_load(f)
+
+PEPPER = APP_CONFIG["config"]["pepper"]
+
+# Get the pepper
+pepper_bytes = os.getenv("PEPPER_VAL", "").encode() if PEPPER else b""
+    
+SALT = APP_CONFIG["config"]["salt"]
+HASH_METHOD = APP_CONFIG["config"]["hash"]
+
 def_hash = PasswordHasher(time_cost=1, memory_cost=65536, parallelism=1)
 
 
-#Creating hash by getting the password and hash type.
-def hash_password(password, hash):
 
-    if hash == "sha256":
-        salt = os.urandom(16)
-        return salt, hashlib.sha256(salt + password.encode()).hexdigest()
+def hash_password(password):
     
-    elif hash == "bcrypt":
-        return bcrypt.hashpw(password.encode(), bcrypt.gensalt(rounds=12))
-    
-    elif hash == "argon2id":
-        return def_hash.hash(password)
-    #if no hash is defind.
-    else:
-        return password
+    password_bytes = password.encode()
+    salt_hex = None  # Default if no salt is used
+
+    # 2. Hashing Logic
+    if HASH_METHOD == "sha256":
+        data = password_bytes
+        if SALT:
+            salt_raw = os.urandom(16)
+            salt_hex = salt_raw.hex()
+            data += salt_raw
         
+        data += pepper_bytes # Add pepper last
+        hashed = hashlib.sha256(data).hexdigest()
+
+    elif HASH_METHOD == "bcrypt":
+        # Best practice for pepper + bcrypt: 
+        # Hash the combo with SHA256 first to avoid the 72-character limit
+        payload = password_bytes + pepper_bytes
+        hashed = bcrypt.hashpw(payload, bcrypt.gensalt(rounds=12)).decode('utf-8')
+
+    elif HASH_METHOD == "argon2id":
+        # Argon2 handles its own salt; we just provide the peppered string
+        payload = password + (pepper_bytes.decode() if PEPPER else "")
+        hashed = def_hash.hash(payload)
+
+    else:
+        # Plaintext
+        hashed = password
+
+    # Always return (hash, salt) so your DB saving code is consistent
+    return hashed, salt_hex
+
+def verify_password(password, stored_hash, salt=None):
+    password_bytes = password.encode()
     
-#verufying the password with the stored hash, by hashing the password and compering with the stored one.
-def verify_password(password, stored_hash, hash, salt=None):
-    print("hash: ", stored_hash, password, hash)
-    if hash == "sha256":
-        return hashlib.sha256(salt + password.encode()).hexdigest() == stored_hash
+    if HASH_METHOD == "sha256":
+        # Combine components
+        data = password_bytes
+        if SALT and salt:
+            data += bytes.fromhex(salt)
+        data += pepper_bytes
+        
+        current_hash = hashlib.sha256(data).hexdigest()
+        
+        return current_hash ==  stored_hash
     
-    elif hash == "bcrypt":
-        return bcrypt.checkpw(password.encode(), stored_hash) 
-    
-    elif hash == "argon2id":
+    elif HASH_METHOD == "bcrypt":
+        # Note: bcrypt has a 72-character limit. 
+        # Adding a long pepper might truncate the password.
+        # Pre-hashing the password+pepper is a common workaround.
+        payload = password_bytes + pepper_bytes
+        return bcrypt.checkpw(payload, stored_hash.encode('utf-8'))
+        
+    elif HASH_METHOD == "argon2id":
+        # Argon2 handles its own salting internally
+        payload = password + (pepper_bytes.decode() if PEPPER else "")
         try:
-            print("sldjjlfhdslhslhsjlfhls")
-            def_hash.verify(stored_hash, password)
-            return True
-        except:
+            return def_hash.verify(stored_hash, payload)
+        except Exception:
             return False
-    #if no hash is defind.    
+            
     else:
         return password == stored_hash
