@@ -11,9 +11,9 @@ with open("config.yaml", "r") as f:
     APP_CONFIG = yaml.safe_load(f)
 
 #initialize the web server with the config file
-HASH_METHOD = APP_CONFIG["config"]["hash"]
-SALT = APP_CONFIG["config"]["salt"]
-PEPPER = APP_CONFIG["config"]["pepper"]
+
+
+
 PROTECTION = APP_CONFIG["protection"]
 
 app = Flask(__name__)
@@ -36,13 +36,10 @@ class User(UserMixin, db.Model):
     salt = db.Column(db.String(256), nullable=True)
      
     def set_password(self, password):
-        if SALT:
-            self.password, self.salt = encryption.hash_password(password, method=HASH_METHOD,use_salt=SALT)
-        else:
-            self.password = encryption.hash_password(password,method=HASH_METHOD)
-
+        self.password, self.salt = encryption.hash_password(password)
+        
     def check_password(self, password):
-        return encryption.verify_password(password, self.password, method= HASH_METHOD)
+        return encryption.verify_password(password, self.password)
 
     def is_locked(self):
         if self.locked_until and self.locked_until > datetime.utcnow():
@@ -66,7 +63,7 @@ def register():
         password = request.form.get('password')
 
         new_user = User(username=username)
-        new_user.set_password(password, method=HASH_METHOD)
+        new_user.set_password(password)
 
         db.session.add(new_user)
         db.session.commit()

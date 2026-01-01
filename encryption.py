@@ -2,7 +2,7 @@ from argon2 import PasswordHasher
 import bcrypt, hashlib, os
 import yaml
 from dotenv import load_dotenv
-
+load_dotenv()
 
 with open("config.yaml", "r") as f:
     APP_CONFIG = yaml.safe_load(f)
