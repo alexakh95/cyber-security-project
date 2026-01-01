@@ -89,7 +89,7 @@ def login():
             if not protection.check_rate_limit(username):
                 util.log_security_event(username=username,result='blocked',latency_ms= (time.perf_counter() - start) * 1000)
                 flash("Too many attempts, please wait.")
-                return render_template('login.html')
+                return render_template('login.html'), 429 
         
         user = User.query.filter_by(username=username).first()
         
@@ -103,7 +103,7 @@ def login():
             
             # --- SUCCESS LOGGING ---
             util.log_security_event(username=username, result='success', latency_ms=latency)
-            
+            login_user(user)
             return redirect(url_for('dashboard'))
         flash('Invalid credentials')
         
