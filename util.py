@@ -19,6 +19,10 @@ MAX_PASS = 100000
 
 #getting from json file the user's name and password.
 def users_pass_list():
+    """
+    Returns a list of tuples (usernames,password). 
+    """
+    
     with open("json/user.json", "r") as f:
         data = json.load(f)
     
