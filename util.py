@@ -24,12 +24,12 @@ def users_pass_list():
     
     users = []
 
-    for catigory, user_list in data.items():
+    for _, user_list in data.items():
         for user in user_list:
-            user_entry = {
-                "username": user['username'],
-                "password": user['password'],
-            }
+            user_entry = (
+                 user['username'],
+                 user['password'],
+            )
             users.append(user_entry)
     return users
 
