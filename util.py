@@ -22,7 +22,6 @@ def users_pass_list():
     """
     Returns a list of tuples (usernames,password). 
     """
-    
     with open("json/user.json", "r") as f:
         data = json.load(f)
     
@@ -116,14 +115,18 @@ def generate_sequences(type, file, name=None, min_len=None):
 
 def log_security_event(username,result,latency_ms):
 
+
     for key, val in PROTECTION.items():
         if val :
             protect_type = key
+        else:
+            protect_type= ""
+            break
     
     for key, val in ATTACK.items():
         if val :
             attack_type = key
-            
+    
     filename = f"json_logs/logs_{HASH_METHOD}_{protect_type}_{attack_type}.json"
     
     log_entry = {
