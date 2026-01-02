@@ -4,7 +4,9 @@ from flask_login import LoginManager, UserMixin, login_user, login_required, log
 import encryption, protection
 import yaml, util
 import time
+import secrets
 from datetime import datetime, timedelta
+approved_captcha_tokens = {}
 
 #open config file
 with open("config.yaml", "r") as f:
@@ -13,8 +15,9 @@ with open("config.yaml", "r") as f:
 #initialize the web server with the config file
 
 
-
+GROUP_SEED = APP_CONFIG["GROUP_SEED"]
 PROTECTION = APP_CONFIG["protection"]
+MAX_ATTEMPTS = 10
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'your-very-secret-key'
@@ -31,7 +34,7 @@ class User(UserMixin, db.Model):
     password = db.Column(db.String(256), nullable=False)
     
     failed_login_attempts = db.Column(db.Integer, default=0)
-    locked_until = db.Column(db.DateTime, nullable=True)
+    locked = db.Column(db.Boolean, default=False)
         
     salt = db.Column(db.String(256), nullable=True)
      
@@ -39,12 +42,14 @@ class User(UserMixin, db.Model):
         self.password, self.salt = encryption.hash_password(password)
         
     def check_password(self, password):
-        return encryption.verify_password(password, self.password)
+        return encryption.verify_password(password, self.password,self.salt)
 
-    def is_locked(self):
-        if self.locked_until and self.locked_until > datetime.utcnow():
-            return True
-        return False
+    def is_locked(self, lock):
+        self.locked = lock
+    
+    def update_failed_attempts(self):
+        self.failed_login_attempts = self.failed_login_attempts+1
+        
 
 
 @login_manager.user_loader
@@ -55,6 +60,26 @@ def load_user(user_id):
 @app.route('/')
 def index():
     return redirect(url_for('login'))
+
+@app.route('/login_totp', methods=['GET', 'POST'])
+def login_totp():
+    if request.method == 'POST':
+        username = session.get('username')
+
+        #Check if the TOTP token is valid
+        result = totp.veryfy_totp(session.get('totp_secret'), request.form.get('TOTP_token'))
+        
+        latency = (time.perf_counter() - session.get('start')) * 1000
+
+        if result:
+            util.log_security_event(username=username, result='totp_success', latency_ms=latency)
+            return redirect(url_for('dashboard')), 200
+        
+        util.log_security_event(username=username,result='totp_fail',latency_ms= latency)
+        flash('Invalid credentials')
+
+    return render_template('login.html'), 501
+
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
@@ -92,6 +117,9 @@ def login():
         
         #TOTP protection that comes after successful password verification
         if user and user.check_password(request.form.get('password')):
+            if PROTECTION["lockout"]:
+                user.failed_login_attempts = 0
+                db.session.commit()
             if PROTECTION["TOTP"]:
                 flash("TOTP required (not implemented)")
                 return render_template('login.html')
@@ -105,6 +133,18 @@ def login():
         flash('Invalid credentials')
         
         # 4. FAILURE PATH
+        if PROTECTION["lockout"]:
+            if user.failed_login_attempts >= MAX_ATTEMPTS:
+                user.is_locked(True)
+                db.session.commit()
+                latency = (time.perf_counter() - start) * 1000
+                util.log_security_event(username=username, result='locked', latency_ms=latency)
+                return render_template('login.html'), 429 
+            else:
+                user.update_failed_attempts()
+            
+            db.session.commit()
+               
         latency = (time.perf_counter() - start) * 1000
         util.log_security_event(username=username, result='fail', latency_ms=latency)
         flash('Invalid credentials')
@@ -112,7 +152,19 @@ def login():
     return render_template('login.html')
 
 
+@app.route('/admin/get_captcha_token')
+def get_simulation_token():
+    seed = request.args.get('group_seed')
+    user_id = request.args.get('user_id')
+    
+    if seed != GROUP_SEED:
+        return {"error": "Unauthorized"}, 401
 
+    
+    sim_token = secrets.token_hex(16)
+    approved_captcha_tokens[user_id] = sim_token
+    
+    return {"captcha_token": sim_token}
 
 @app.route('/dashboard')
 @login_required
