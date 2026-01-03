@@ -12,7 +12,7 @@ PEPPER = APP_CONFIG["config"]["pepper"]
 PROTECTION = APP_CONFIG["protection"]
 ATTACK = APP_CONFIG["attack"]
 
-MAX_PASS = 100000
+MAX_PASS = 300000
 
 #getting from json file the user's name and password.
 def users_pass_list():
@@ -23,23 +23,23 @@ def users_pass_list():
 
     for catigory, user_list in data.items():
         for user in user_list:
-            user_entry = {
-                "username": user['username'],
-                "password": user['password'],
-            }
-            users.append(user_entry)
+            users.append(
+                 (user['username'],
+                 user['password'])
+            )
+
     return users
 
-#getting the user's totp secret key if the is.
-def get_secret_key(username, category):
+
+#getting the user's totp secret key if there is.
+def get_secret_key(username):
     with open("json/user.json", "r") as f:
         data = json.load(f)
 
-    users = data[category]
-
-    for user in users:
-        if user['username'] == username:
-            return user['totp_secret'] if 'totp_secret' in user else None 
+    for category, user_list in data.items():
+        for user in user_list:
+            if user['username'] == username:
+                return user['totp_secret'] if 'totp_secret' in user else None 
     
 
 #getting list of users from json file base on the strength of the passwords.
@@ -50,18 +50,18 @@ def users_list(category):
     users = []
 
     if category in data:
-        print(category)
         for user in data[category]:
             users.append(
                 user['username']
             )
     return users
 
+
+
 #creting a passowrd list base on the name of the user.
 def med_generate_sequences(file, name, min_length=4, max_length=6):
     name_lower = name.lower()
     count = 0 
-    print(name_lower)
     substring = [name_lower[:i] for i in range(1, len(name_lower) + 1)]
     numbers = '0123456789'
     with open(file, "w") as f:
@@ -94,20 +94,23 @@ def rand_generate_sequences(file):
 
 
 def generate_sequences(type, file, name=None, min_len=None):
-    if type == "mudium":
+    if type == "medium":
         med_generate_sequences(file, name, min_len)
     else:
         rand_generate_sequences(file)
 
 
 def log_security_event(username,result,latency_ms):
+    protect_type = None
     for key, val in PROTECTION.items():
         if val :
             protect_type = key
+
     
     for key, val in ATTACK.items():
         if val :
             attack_type = key
+            
             
     filename = f"json_logs/logs_{HASH_METHOD}_{protect_type}_{attack_type}.json"
     
@@ -123,4 +126,6 @@ def log_security_event(username,result,latency_ms):
     
     with open(filename, "a") as f:
         f.write(json.dumps(log_entry) + "\n")
+
+
        
