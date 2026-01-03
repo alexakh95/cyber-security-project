@@ -117,7 +117,7 @@ def login():
         
         #TOTP protection that comes after successful password verification
         if user and user.check_password(request.form.get('password')):
-            if PROTECTION["lockout"]:
+            if PROTECTION["lockout"] and not user.locked:
                 user.failed_login_attempts = 0
                 db.session.commit()
             if PROTECTION["TOTP"]:
