@@ -113,36 +113,26 @@ def login():
         
         user = User.query.filter_by(username=username).first()
         
-        
         # ---- CAPTCHA ENFORCEMENT ----
         captcha_required = (
                 PROTECTION["captcha"]
                 and user
                 and user.failed_login_attempts >= MAX_ATTEMPTS
             )
+        
         if captcha_required:
             # CAPTCHA required
             captcha_token = request.form.get("captcha_token")
             
             if not captcha_token or not (approved_captcha_tokens[user.id] == captcha_token):
+                session['username'] = username
                 session['user_id'] = user.id
-                return jsonify({"captcha_required":True, "catcha_token": ...}), 403
-            
-                
-            # CAPTCHA passed → reset failed attempts
-            user.failed_login_attempts = 0
-            db.session.commit()
-            # --- SUCCESS LOGGING ---
-            util.log_security_event(username=username, result='success', latency_ms=latency)
-            login_user(user)
-            return redirect(url_for('dashboard'))
+                return jsonify({"captcha_required":True, "catcha_token": ""}), 603
               
-                
         # ------Password correct ------
         if user and user.check_password(request.form.get('password')):
             
-            #Reset failed attempts on success 
-            if PROTECTION["lockout"] and not user.locked:
+            if PROTECTION["captcha"] or (PROTECTION["lockout"] and not user.locked):
                 user.failed_login_attempts = 0
                 db.session.commit()
                 
@@ -154,7 +144,7 @@ def login():
                 session['totp_secret'] = totp_secret #Storing the secret TOTP to use in the login_totp.
                 session['username'] = username
                 session['start'] = start
-                return redirect(url_for('login_totp')), 500
+                return redirect(url_for('login_totp')), 503
             
             # CALCULATE LATENCY FOR SUCCESS
             latency = (time.perf_counter() - start) * 1000
@@ -197,7 +187,7 @@ def login():
 def get_simulation_token():
     if request.method == 'POST':
         username = session.get('username')
-        seed = session.get('group_seed')
+        seed = request.form.get('group_seed')
         user_id = session.get('user_id')
         
         if seed != str(GROUP_SEED):

