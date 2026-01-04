@@ -1,15 +1,16 @@
 #CAPTCHA, lockout, rate-limiting, TOTP, pepper
+#"sha256","bcrypt", "argon2id"
 
 attack:
   bruteforce:
-  passwordspraying:
+  passwordspraying: true
 config:
-  hash:
+  hash: "bcrypt"
   pass_level:
-  salt: 
-  pepper:
+  salt: true
+  pepper: false
 protection:
-  captcha: false
+  captcha: true
   lockout: false
   rate-limit: false
   TOTP: false
