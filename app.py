@@ -114,7 +114,6 @@ def login():
         user = User.query.filter_by(username=username).first()
         
         
-        
         # ---- CAPTCHA ENFORCEMENT ----
         captcha_required = (
                 PROTECTION["captcha"]
