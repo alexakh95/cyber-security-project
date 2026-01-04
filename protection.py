@@ -7,16 +7,15 @@ REFILL_RATE = 1       # Tokens added per minute
 bucket_storage = {}   # In-memory storage: { ip: {"tokens": 10, "last_updated": datetime} }
 
 
-def check_rate_limit(ip):
+def check_rate_limit(user):
     now = datetime.utcnow()
     
     # Initialize bucket for new IPs
-    if ip not in bucket_storage:
-        bucket_storage[ip] = {"tokens": MAX_TOKENS, "last_updated": now}
+    if user not in bucket_storage:
+        bucket_storage[user] = {"tokens": MAX_TOKENS, "last_updated": now}
 
-    record = bucket_storage[ip]
+    record = bucket_storage[user]
     
-    # 1. REFILL LOGIC
     # Calculate how much time passed and add tokens accordingly
     time_passed = (now - record["last_updated"]).total_seconds()
     new_tokens = time_passed * (REFILL_RATE / 60.0) # Convert rate to per-second
@@ -24,9 +23,12 @@ def check_rate_limit(ip):
     record["tokens"] = min(MAX_TOKENS, record["tokens"] + new_tokens)
     record["last_updated"] = now
 
-    # 2. CONSUMPTION LOGIC
+   
     if record["tokens"] >= 1:
         record["tokens"] -= 1
         return True  # Access granted
     else:
         return False # Rate limited
+    
+
+    
