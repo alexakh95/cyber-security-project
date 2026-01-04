@@ -37,15 +37,15 @@ def users_pass_list():
     return users
 
 #getting the user's totp secret key if the is.
-def get_secret_key(username, category):
+def get_secret_key(username):
     with open("json/user.json", "r") as f:
         data = json.load(f)
 
-    users = data[category]
-
-    for user in users:
-        if user['username'] == username:
-            return user['totp_secret'] if 'totp_secret' in user else None 
+    
+    for _, user_list in data.items():
+        for user in user_list:
+            if user['username'] == username:
+                return user['totp_secret'] if 'totp_secret' in user else None 
     
 
 #getting list of users from json file base on the strength of the passwords.
@@ -115,13 +115,11 @@ def generate_sequences(type, file, name=None, min_len=None):
 
 def log_security_event(username,result,latency_ms):
 
-
+    protect_type = ""
     for key, val in PROTECTION.items():
-        if val :
+        if val:
             protect_type = key
-        else:
-            protect_type= ""
-            break
+    
     
     for key, val in ATTACK.items():
         if val :
