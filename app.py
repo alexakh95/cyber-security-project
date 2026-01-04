@@ -1,11 +1,10 @@
-from flask import Flask, render_template, redirect, url_for, request, flash
+from flask import Flask, render_template, redirect, url_for, request, flash, session, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 import encryption, protection
-import yaml, util
+import yaml, util ,totp
 import time
 import secrets
-from datetime import datetime, timedelta
 approved_captcha_tokens = {}
 
 #open config file
@@ -17,7 +16,7 @@ with open("config.yaml", "r") as f:
 
 GROUP_SEED = APP_CONFIG["GROUP_SEED"]
 PROTECTION = APP_CONFIG["protection"]
-MAX_ATTEMPTS = 10
+MAX_ATTEMPTS = 1
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'your-very-secret-key'
@@ -103,7 +102,6 @@ def register():
 def login():
     if request.method == 'POST':
         username = request.form.get('username')
-        ip = request.remote_addr
         start = time.perf_counter()
         
         #rate limit-protection
@@ -115,14 +113,59 @@ def login():
         
         user = User.query.filter_by(username=username).first()
         
-        #TOTP protection that comes after successful password verification
+        captcha_token = (
+            request.form.get('captcha_token')
+            or (request.json.get('captcha_token') if request.is_json else None)
+        )
+        
+        # ---- CAPTCHA ENFORCEMENT ----
+        if PROTECTION["captcha"] and user:
+            if user.failed_login_attempts >= MAX_ATTEMPTS:
+                # CAPTCHA required
+                if not captcha_token:
+                    return jsonify({
+                        "captcha_required": True,
+                        "message": "CAPTCHA required after multiple failed attempts"
+                    }), 403
+
+                # Verify CAPTCHA token
+                if int(captcha_token) != GROUP_SEED:
+                    util.log_security_event(
+                        username=username,
+                        result='captcha_failed',
+                        latency_ms=(time.perf_counter() - start) * 1000
+                    )
+                    return jsonify({"error": "invalid_captcha"}), 403
+
+                util.log_security_event(
+                        username=username,
+                        result='captcha_succesed ',
+                        latency_ms=(time.perf_counter() - start) * 1000
+                    )
+                
+                # CAPTCHA solved → reset attempts
+                user.failed_login_attempts = 0
+                db.session.commit()
+                return redirect(url_for('dashboard'))
+                
+        # ------Password correct ------
         if user and user.check_password(request.form.get('password')):
+            
+            #Reset failed attempts on success 
             if PROTECTION["lockout"] and not user.locked:
                 user.failed_login_attempts = 0
                 db.session.commit()
-            if PROTECTION["TOTP"]:
-                flash("TOTP required (not implemented)")
-                return render_template('login.html')
+                
+            totp_secret = util.get_secret_key(username)
+            
+            #Run TOTP after success 
+            if PROTECTION["TOTP"] and totp_secret:
+                flash("TOTP required")
+                session['totp_secret'] = totp_secret #Storing the secret TOTP to use in the login_totp.
+                session['username'] = username
+                session['start'] = start
+                return redirect(url_for('login_totp')), 500
+            
             # CALCULATE LATENCY FOR SUCCESS
             latency = (time.perf_counter() - start) * 1000
             
@@ -130,41 +173,55 @@ def login():
             util.log_security_event(username=username, result='success', latency_ms=latency)
             login_user(user)
             return redirect(url_for('dashboard'))
-        flash('Invalid credentials')
         
-        # 4. FAILURE PATH
-        if PROTECTION["lockout"]:
-            if user.failed_login_attempts >= MAX_ATTEMPTS:
-                user.is_locked(True)
-                db.session.commit()
-                latency = (time.perf_counter() - start) * 1000
-                util.log_security_event(username=username, result='locked', latency_ms=latency)
-                return render_template('login.html'), 429 
-            else:
-                user.update_failed_attempts()
+        
+        # ------- Wrong Password -------
+        if user:
             
-            db.session.commit()
-               
+            user.update_failed_attempts()
+            
+            if PROTECTION["lockout"] and user.failed_login_attempts >= MAX_ATTEMPTS:
+                
+                user.is_locked(True)
+                    
+                latency = (time.perf_counter() - start) * 1000
+                util.log_security_event(
+                    username=username,
+                    result='locked', 
+                    latency_ms=latency)
+                flash("Account locked due to too many failed attempts")
+                return render_template('login.html'), 429 
+                
+        # DB update    
+        db.session.commit()
+         
+        #------ Failure LOG -------       
         latency = (time.perf_counter() - start) * 1000
         util.log_security_event(username=username, result='fail', latency_ms=latency)
-        flash('Invalid credentials')
         
+    flash('Invalid credentials')
     return render_template('login.html')
 
 
-@app.route('/admin/get_captcha_token')
+@app.route('/admin/get_captcha_token', methods=['GET', 'POST'])
 def get_simulation_token():
-    seed = request.args.get('group_seed')
-    user_id = request.args.get('user_id')
+    if request.method == 'POST':
+        seed = request.form.get('group_seed')
+        username = session.get('username')
+        user_id = session.get('user_id')
     
-    if seed != GROUP_SEED:
-        return {"error": "Unauthorized"}, 401
+        latency = (time.perf_counter() - session.get('start')) * 1000
 
+        if int(seed) != GROUP_SEED:
+            util.log_security_event(username=username, result='invalid_captch', latency_ms=latency)
+            return {"error": "Unauthorized"}, 401
+       
+        util.log_security_event(username=username, result='valid_captch', latency_ms=latency)
     
-    sim_token = secrets.token_hex(16)
-    approved_captcha_tokens[user_id] = sim_token
+        sim_token = secrets.token_hex(16)
+        approved_captcha_tokens[user_id] = sim_token
     
-    return {"captcha_token": sim_token}
+    return {"captcha_token": ""}, 200
 
 @app.route('/dashboard')
 @login_required
