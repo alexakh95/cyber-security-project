@@ -113,40 +113,31 @@ def login():
         
         user = User.query.filter_by(username=username).first()
         
-        captcha_token = (
-            request.form.get('captcha_token')
-            or (request.json.get('captcha_token') if request.is_json else None)
-        )
+        
         
         # ---- CAPTCHA ENFORCEMENT ----
-        if PROTECTION["captcha"] and user:
-            if user.failed_login_attempts >= MAX_ATTEMPTS:
-                # CAPTCHA required
-                if not captcha_token:
-                    return jsonify({
-                        "captcha_required": True,
-                        "message": "CAPTCHA required after multiple failed attempts"
-                    }), 403
-
-                # Verify CAPTCHA token
-                if int(captcha_token) != GROUP_SEED:
-                    util.log_security_event(
-                        username=username,
-                        result='captcha_failed',
-                        latency_ms=(time.perf_counter() - start) * 1000
-                    )
-                    return jsonify({"error": "invalid_captcha"}), 403
-
-                util.log_security_event(
-                        username=username,
-                        result='captcha_succesed ',
-                        latency_ms=(time.perf_counter() - start) * 1000
-                    )
+        captcha_required = (
+                PROTECTION["captcha"]
+                and user
+                and user.failed_login_attempts >= MAX_ATTEMPTS
+            )
+        if captcha_required:
+            # CAPTCHA required
+            captcha_token = request.form.get("captcha_token")
+            
+            if not captcha_token or not (approved_captcha_tokens[user.id] == captcha_token):
+                session['user_id'] = user.id
+                return jsonify({"captcha_required":True, "catcha_token": ...}), 403
+            
                 
-                # CAPTCHA solved → reset attempts
-                user.failed_login_attempts = 0
-                db.session.commit()
-                return redirect(url_for('dashboard'))
+            # CAPTCHA passed → reset failed attempts
+            user.failed_login_attempts = 0
+            db.session.commit()
+            # --- SUCCESS LOGGING ---
+            util.log_security_event(username=username, result='success', latency_ms=latency)
+            login_user(user)
+            return redirect(url_for('dashboard'))
+              
                 
         # ------Password correct ------
         if user and user.check_password(request.form.get('password')):
@@ -206,22 +197,23 @@ def login():
 @app.route('/admin/get_captcha_token', methods=['GET', 'POST'])
 def get_simulation_token():
     if request.method == 'POST':
-        seed = request.form.get('group_seed')
         username = session.get('username')
+        seed = session.get('group_seed')
         user_id = session.get('user_id')
-    
-        latency = (time.perf_counter() - session.get('start')) * 1000
-
-        if int(seed) != GROUP_SEED:
-            util.log_security_event(username=username, result='invalid_captch', latency_ms=latency)
+        
+        if seed != str(GROUP_SEED):
+            util.log_security_event(
+                username=username,
+                result='invalid_group_seed',
+                latency_ms=0
+            )
             return {"error": "Unauthorized"}, 401
-       
-        util.log_security_event(username=username, result='valid_captch', latency_ms=latency)
-    
         sim_token = secrets.token_hex(16)
         approved_captcha_tokens[user_id] = sim_token
     
-    return {"captcha_token": ""}, 200
+    return    { "captcha_required": False,
+        "captcha_token": sim_token
+    }, 200
 
 @app.route('/dashboard')
 @login_required
