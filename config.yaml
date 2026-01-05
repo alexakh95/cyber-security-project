@@ -11,8 +11,8 @@ config:
   pepper: true
 protection:
   captcha: false
-  lockout: false
-  rate-limit: true
+  lockout: true
+  rate-limit: false
   TOTP: false
 GROUP_SEED: 114467408
   
