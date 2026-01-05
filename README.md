@@ -61,6 +61,7 @@ The module records metrics such as:
 5. Results are stored for statistical analysis.
 
 ## Project Structure
+```bash
 ├── attacks
 │   └── ps.py
 │   └──bruteforce.py
@@ -84,7 +85,7 @@ The module records metrics such as:
 │   └── util.py
 └── users
     └── user.json
-
+```
 
 ## Installation
 Prerequirments: Python >= 3.x ,pip
