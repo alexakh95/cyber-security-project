@@ -1,6 +1,6 @@
-import itertools, string, random, json, yaml
+import itertools, string, random, json, yaml, os
 from datetime import datetime
-
+from pathlib import Path
 #open config file
 with open("config.yaml", "r") as f:
     APP_CONFIG = yaml.safe_load(f)
@@ -9,54 +9,73 @@ GROUP_SEED = APP_CONFIG["GROUP_SEED"]
 HASH_METHOD = APP_CONFIG["config"]["hash"]
 SALT = APP_CONFIG["config"]["salt"]
 PEPPER = APP_CONFIG["config"]["pepper"]
+
+# Get the directory where the current file (util.py) is located
+BASE_DIR = Path(__file__).resolve().parent
+
+# .parent moves up to 'Cyber Project', then we navigate down to the json file
+USER_FILE = BASE_DIR.parent / "users" / "user.json"
+
+
 PROTECTION = APP_CONFIG["protection"]
+if PROTECTION is None:
+    PROTECTION = ""
 ATTACK = APP_CONFIG["attack"]
 
 MAX_PASS = 300000
 
 #getting from json file the user's name and password.
 def users_pass_list():
-    with open("json/user.json", "r") as f:
+    """
+    Returns a list of tuples (usernames,password). 
+    """
+    with open(USER_FILE, "r") as f:
         data = json.load(f)
     
     users = []
 
-    for catigory, user_list in data.items():
+    for _, user_list in data.items():
         for user in user_list:
-            users.append(
-                 (user['username'],
-                 user['password'])
+            user_entry = (
+                 user['username'],
+                 user['password'],
             )
-
+            users.append(user_entry)
     return users
 
-
-#getting the user's totp secret key if there is.
+#getting the user's totp secret key if the is.
 def get_secret_key(username):
-    with open("json/user.json", "r") as f:
+    with open(USER_FILE, "r") as f:
         data = json.load(f)
 
-    for category, user_list in data.items():
+    
+    for _, user_list in data.items():
         for user in user_list:
             if user['username'] == username:
                 return user['totp_secret'] if 'totp_secret' in user else None 
     
 
 #getting list of users from json file base on the strength of the passwords.
-def users_list(category):
-    with open("json/user.json", "r") as f:
+def get_usernames_by_category(category=None):
+    """
+    Returns a list of usernames. 
+    If category is provided ('weak', 'medium', 'strong'), returns users in that group.
+    If category is None, returns all usernames from all groups.
+    """
+    with open(USER_FILE, "r") as f:
         data = json.load(f)
+        
+    if category:
+        # Get users from the specific key, default to empty list if category doesn't exist
+        users = data.get(category, [])
+        return [user["username"] for user in users]
     
-    users = []
-
-    if category in data:
-        for user in data[category]:
-            users.append(
-                user['username']
-            )
-    return users
-
-
+    # If no category, flatten all lists and extract usernames
+    all_usernames = []
+    for cat_list in data.values():
+        all_usernames.extend([user["username"] for user in cat_list])
+    
+    return all_usernames
 
 #creting a passowrd list base on the name of the user.
 def med_generate_sequences(file, name, min_length=4, max_length=6):
@@ -94,25 +113,25 @@ def rand_generate_sequences(file):
 
 
 def generate_sequences(type, file, name=None, min_len=None):
-    if type == "medium":
+    if type == 'medium':
         med_generate_sequences(file, name, min_len)
     else:
         rand_generate_sequences(file)
 
 
 def log_security_event(username,result,latency_ms):
-    protect_type = None
-    for key, val in PROTECTION.items():
-        if val :
-            protect_type = key
 
+    protect_type = ""
+    for key, val in PROTECTION.items():
+        if val:
+            protect_type = key
+    
     
     for key, val in ATTACK.items():
         if val :
             attack_type = key
-            
-            
-    filename = f"json_logs/logs_{HASH_METHOD}_{protect_type}_{attack_type}.json"
+    
+    filename = f"{BASE_DIR.parent}/json_logs/logssssss_{HASH_METHOD}_{protect_type}_{attack_type}.json"
     
     log_entry = {
             "timestamp": datetime.utcnow().isoformat() + "Z",
@@ -126,6 +145,4 @@ def log_security_event(username,result,latency_ms):
     
     with open(filename, "a") as f:
         f.write(json.dumps(log_entry) + "\n")
-
-
        

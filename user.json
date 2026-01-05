@@ -1,0 +1,135 @@
+{
+    "weak": [
+        {
+            "username": "root",
+            "password" : "root"
+        },
+        {
+            "username": "david",
+            "password" : "12345",
+            "totp_secret" : "OVDFWAGJCF3WJSSRQJXWBFYOGEWAXXBZ"
+        },
+        {
+            "username": "moriya",
+            "password" : "password",
+            "totp_secret": "ETQC2PWANZMMNIPHEGTBEOW2CY3JTLPB"
+        },
+        {
+            "username": "charlie",
+            "password" : "pizza"
+        },
+        {
+            "username": "georgia",
+            "password" : "11111",
+            "totp_secret" : "QVXN42O2OZJ4NYIXFIRYA44XTO27PEIZ"
+        },
+        {
+            "username": "jack",
+            "password" : "cat"
+        },
+        {
+            "username": "rachel",
+            "password" : "love"
+        },
+        {
+            "username": "tina",
+            "password" : "123456"
+        },
+        {
+            "username": "dany",
+            "password" : "000000"
+        },
+        {
+            "username": "mina",
+            "password" : "2025"
+        }
+    ],
+    "medium": [
+        {
+            "username": "william",
+            "password" : "123will"
+        },
+        {
+            "username": "benjamin",
+            "password" : "ben789",
+            "totp_secret": "ETQC2PWANZMMNIPHEGTBEOW2CY3JTLPB"
+        },
+        {
+            "username": "lily",
+            "password" : "l68522"
+        },
+        {
+            "username": "yuval",
+            "password" : "yu1414"
+        },
+        {
+            "username": "shir",
+            "password" : "s08642"
+        },
+        {
+            "username": "zoe",
+            "password" : "987zoe",
+            "totp_secret": "SXKX62BCBSRQYIMFCY6Z3HWLF43NZWSQ"
+        },
+        {
+            "username": "ryen",
+            "password" : "ryen25"
+        },
+        {
+            "username": "christopher",
+            "password" : "4567ch"
+        },
+        {
+            "username": "michael",
+            "password" : "mica000"
+        },
+        {
+            "username": "leo",
+            "password" : "leo211"
+        }
+    ],
+    "strong": [
+        {
+            "username": "admin",
+            "password" : "A26f3yjP9",
+            "totp_secret": "PNPILHPRMVA37VY4GH5N3NY5TLQM466N"
+        },
+        {
+            "username": "jeremy",
+            "password" : "8hwIn053"
+        },
+        {
+            "username": "mark",
+            "password" : "r63YoN3w1"
+        },
+        {
+            "username": "jason",
+            "password" : "P04g2w9m"
+        },
+        {
+            "username": "kevin",
+            "password" : "0VuB2M07",
+            "totp_secret": "WHDZ2VMN62ZHY3IXO7HLMWX5RY2JMIJY"
+        },
+        {
+            "username": "andrew",
+            "password" : "9mfC7zp2E"
+        },
+        {
+            "username": "jill",
+            "password" : "L0m32bf4"
+        },
+        {
+            "username": "liam",
+            "password" : "3ouD8F5sp"
+        },
+        {
+            "username": "steven",
+            "password" : "Z6p2k5J2g"
+        },
+        {
+            "username": "rome",
+            "password" : "i5QoPb27d"
+        }
+    ]
+}
