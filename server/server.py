@@ -16,7 +16,7 @@ with open("config.yaml", "r") as f:
 
 GROUP_SEED = APP_CONFIG["GROUP_SEED"]
 PROTECTION = APP_CONFIG["protection"]
-MAX_ATTEMPTS = 1
+MAX_ATTEMPTS = 10
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'your-very-secret-key'
