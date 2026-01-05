@@ -1,26 +1,26 @@
-### "A Comparative Analysis of Password-Based Authentication Mechanisms”
+# "A Comparative Analysis of Password-Based Authentication Mechanisms”
 
-# Primary Goal
+## Primary Goal
 To conduct a reproducible experimental study comparing password hashing and authentication
 mechanisms (e.g., bcrypt, Argon2, SHA-256 + salt), examining the impact of various security
 protection mechanisms such as salt, pepper, rate limiting, account lockout, CAPTCHA, and TOTP,
 and to perform a statistical analysis of the collected data.
 
-# Secondary Goal
+## Secondary Goal
 1.Measure success rates and time-to-compromise under a variety of protection mechanisms.
 2.Quantify the effect of each protection mechanism individually and in combination.
 3.Evaluate the usability–security trade-off and system performance for each approach.
 4.Analyze and compare the experimental result
 
-# Tech Stack
+## Tech Stack
 Language: Python 
 Framework: Flask 
 Database: SQLite 
 
-# Architecture
+## Architecture
 The system is designed as a configurable authentication server that enables controlled experimentation with different password hashing algorithms and defensive mechanisms under simulated attack scenarios.
 
-# High-Level Design 
+## High-Level Design 
 The arcitecture consists of three main components:
 1. Authentication server
 2. Configuration Layer
@@ -89,7 +89,7 @@ The module records metrics such as:
 ## Installation
 Prerequirments: Python >= 3.x ,pip
 
-# Steps
+### Steps
 ```bash
 git clone https://github.com/alexakh95/cyber-security-project
 cd cyber-security-project
@@ -98,7 +98,7 @@ source .venv/bin/activate
 pip install -r requirements.txt 
 ```
 
-# Running an Experiment
+## Running an Experiment
 1. **Configure** the `config.yaml` file by selecting the attack type, protection mechanisms, and hash function.
 
 ### Example configuration:
