@@ -80,8 +80,7 @@ def get_usernames_by_category(category=None):
 #creting a passowrd list base on the name of the user.
 def med_generate_sequences(file, name, min_length=4, max_length=6):
     name_lower = name.lower()
-    count = 0 
-    print(name_lower)
+    count = 0
     substring = [name_lower[:i] for i in range(1, len(name_lower) + 1)]
     numbers = '0123456789'
     with open(file, "w") as f:
@@ -114,7 +113,7 @@ def rand_generate_sequences(file):
 
 
 def generate_sequences(type, file, name=None, min_len=None):
-    if type == "mudium":
+    if type == "medium":
         med_generate_sequences(file, name, min_len)
     else:
         rand_generate_sequences(file)

@@ -1,5 +1,6 @@
 #CAPTCHA, lockout, rate-limiting, TOTP, pepper
 #"sha256","bcrypt", "argon2id"
+#password level: weak, meduim, strong
 
 attack:
   bruteforce: false

@@ -64,7 +64,9 @@ The module records metrics such as:
 ```bash
 ├── attacks
 │   └── ps.py
-│   └──bruteforce.py
+│   └── bruteforce.py
+├── bf_passwords
+│   └── weakpass.txt
 ├── common_passwords.csv
 ├── config.yaml
 ├── experiment
@@ -101,6 +103,8 @@ pip install -r requirements.txt
 
 ## Running an Experiment
 1. **Configure** the `config.yaml` file by selecting the attack type, protection mechanisms, and hash function.
+This example demonstrates running a **password spraying attack** with server-side protections enabled, including **account lockout**, salt and pepper, and the **SHA-256** hashing algorithm.
+For brute-force attacks, it is possible to select the target users based on their password strength (weak, medium, or strong).
 
 ### Example configuration:
 

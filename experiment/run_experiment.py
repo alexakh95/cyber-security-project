@@ -2,7 +2,7 @@ import multiprocessing
 import time
 import yaml
 from server.server import app, init_db
-from attacks import ps 
+from attacks import ps, bruteforce
 
 #open config file
 with open("config.yaml", "r") as f:
@@ -26,8 +26,8 @@ if __name__ == '__main__':
         time.sleep(2)
         try:
             for item in ATTACK_TYPE:
-                #if item == "bruteforce" and ATTACK_TYPE[item]:
-                   #bruteforce.run()
+                if item == "bruteforce" and ATTACK_TYPE[item]:
+                   bruteforce.brute_rorce()
                 if item == "passwordspraying" and ATTACK_TYPE[item]:
                     ps.password_spraying()
             
