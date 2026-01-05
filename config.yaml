@@ -2,17 +2,17 @@
 #"sha256","bcrypt", "argon2id"
 
 attack:
-  bruteforce:
+  bruteforce: false
   passwordspraying: true
 config:
-  hash: "bcrypt"
+  hash: "sha256"
   pass_level:
   salt: true
-  pepper: false
+  pepper: true
 protection:
-  captcha: true
+  captcha: false
   lockout: false
-  rate-limit: false
+  rate-limit: true
   TOTP: false
 GROUP_SEED: 114467408
   

@@ -1,11 +1,9 @@
-from app import app, db, User
-import util
-import multiprocessing
+
+import server.util as util
 import time
-from datetime import datetime
 import csv
-import requests
-from app import init_db
+import requests, os
+from pathlib import Path
 
 LOGIN_URL = "http://127.0.0.1:5000/login"
 USERS = util.get_usernames_by_category()
@@ -14,12 +12,15 @@ CAPTCHA_URL = "http://127.0.0.1:5000/admin/get_captcha_token"
 GROUP_SEED = 114467408
 MAX_DURATION = 7200 #this is two hours 
 
-def run_server():
-    app.run(debug=False, use_reloader=False)
+# Get the directory where the current file (util.py) is located
+BASE_DIR = Path(__file__).resolve().parent
+
+# .parent moves up to 'Cyber Project', then we navigate down to the json file
+PASSWORD_FILE = BASE_DIR.parent / "common_passwords.csv"
     
 def password_spraying():
     
-    with open("common_passwords.csv", newline="", encoding="utf-8") as f:
+    with open(PASSWORD_FILE, newline="", encoding="utf-8") as f:
         reader = csv.reader(f)
         next(reader)
         start = time.perf_counter()
@@ -42,9 +43,9 @@ def password_spraying():
                         # ----- Rate-limit and Lockout -----
                         if code_resp == 429:
                             print("User blocked")
-                            count+=1
-                            if count == 30:
-                                print("Attack has been blocked by the system")
+                            #count+=1
+                            #if count == 30:
+                                #print("Attack has been blocked by the system")
                                 #return 
                                 
                                 
@@ -100,23 +101,3 @@ def password_spraying():
                     time.sleep(0.05) 
             
 
-if __name__ == '__main__':
-
-        # initiate the database with the configuration
-        init_db()
-        # Start server in a separate process
-        server_process = multiprocessing.Process(target=run_server)
-        server_process.start()
-        
-        # Wait a moment for the server to initialize
-        time.sleep(2)
-        try:
-            # Run the attack script
-            password_spraying()
-            
-        except Exception as e:
-            print(f"An error occurred during spraying: {e}")
-        
-        # Terminate the server process to prepare for the next loop
-        server_process.terminate()
-        server_process.join()

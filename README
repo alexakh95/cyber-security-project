@@ -1,0 +1,62 @@
+"A Comparative Analysis of Password-Based Authentication Mechanisms”
+
+Primary Goal
+To conduct a reproducible experimental study comparing password hashing and authentication
+mechanisms (e.g., bcrypt, Argon2, SHA-256 + salt), examining the impact of various security
+protection mechanisms such as salt, pepper, rate limiting, account lockout, CAPTCHA, and TOTP,
+and to perform a statistical analysis of the collected data.
+
+Secondary Goal
+1.Measure success rates and time-to-compromise under a variety of protection mechanisms.
+2.Quantify the effect of each protection mechanism individually and in combination.
+3.Evaluate the usability–security trade-off and system performance for each approach.
+4.Analyze and compare the experimental result
+
+Tech Stack
+Language: Python 
+Framework: Flask 
+Database: SQLite 
+
+Architecture
+The system is designed as a configurable authentication server that enables controlled experimentation with different password hashing algorithms and defensive mechanisms under simulated attack scenarios.
+
+High-Level Design 
+The arcitecture consists of three main components:
+1. Authentication server
+2. Configuration Layer
+3. Attack simulation Module
+
+1. Authentication server 
+The server is responsible for: managing user registration and authentication,
+securely storing usernames and password hashes,enforcing curity and protection mechanism 
+during authentication.
+Core responsibilities: 
+- password hashing using configurable algorithms (e.g. bcrypt, sha256, argnoid2) + using salt, pepper
+- authentication requests handling (login attemps)
+- Tracking authentication state (number of failed login attempts, lockout status etc.)
+
+2. Configuration Layer 
+Security mechanisms are fully configurable via a configuration file, allowing reproducible experiments.
+
+The configuration defines:
+- Password hashin algorithms and parameters
+- Enable protection mechanism, such as rate-limit, lockout, TOTP, CAPTCHA , Salt and Pepper usage.
+
+3. Attack simulation model 
+To evaluate the effectiveness of authentication defenses, the system includes controlled attack simulations:
+- Password spraying attacks
+- Brute-force attacks
+These attacks are executed against the authentication server while varying: hashing algorithms, protection mechanisms,defense combinations
+The module records metrics such as:
+- Attack success rate
+- Time-to-compromise
+- Number of authentication attempts
+- Triggered defense events (e.g., CAPTCHA, lockout)
+
+Data Flow Overview
+1. An authentication request is sent to the server.
+2. The server validates credentials using the configured hashing algorithm.
+3. Protection mechanisms are applied based on configuration.
+4. Attack attempts are logged and metrics are collected.
+5. Results are stored for statistical analysis.
+

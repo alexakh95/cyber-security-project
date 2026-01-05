@@ -1,6 +1,6 @@
-import itertools, string, random, json, yaml
+import itertools, string, random, json, yaml, os
 from datetime import datetime
-
+from pathlib import Path
 #open config file
 with open("config.yaml", "r") as f:
     APP_CONFIG = yaml.safe_load(f)
@@ -9,6 +9,13 @@ GROUP_SEED = APP_CONFIG["GROUP_SEED"]
 HASH_METHOD = APP_CONFIG["config"]["hash"]
 SALT = APP_CONFIG["config"]["salt"]
 PEPPER = APP_CONFIG["config"]["pepper"]
+
+# Get the directory where the current file (util.py) is located
+BASE_DIR = Path(__file__).resolve().parent
+
+# .parent moves up to 'Cyber Project', then we navigate down to the json file
+USER_FILE = BASE_DIR.parent / "users" / "user.json"
+
 
 PROTECTION = APP_CONFIG["protection"]
 if PROTECTION is None:
@@ -22,7 +29,7 @@ def users_pass_list():
     """
     Returns a list of tuples (usernames,password). 
     """
-    with open("json/user.json", "r") as f:
+    with open(USER_FILE, "r") as f:
         data = json.load(f)
     
     users = []
@@ -38,7 +45,7 @@ def users_pass_list():
 
 #getting the user's totp secret key if the is.
 def get_secret_key(username):
-    with open("json/user.json", "r") as f:
+    with open(USER_FILE, "r") as f:
         data = json.load(f)
 
     
@@ -55,7 +62,7 @@ def get_usernames_by_category(category=None):
     If category is provided ('weak', 'medium', 'strong'), returns users in that group.
     If category is None, returns all usernames from all groups.
     """
-    with open("json/user.json", "r") as f:
+    with open(USER_FILE, "r") as f:
         data = json.load(f)
         
     if category:
@@ -125,7 +132,7 @@ def log_security_event(username,result,latency_ms):
         if val :
             attack_type = key
     
-    filename = f"json_logs/logs_{HASH_METHOD}_{protect_type}_{attack_type}.json"
+    filename = f"{BASE_DIR.parent}/json_logs/logs_{HASH_METHOD}_{protect_type}_{attack_type}.json"
     
     log_entry = {
             "timestamp": datetime.utcnow().isoformat() + "Z",
