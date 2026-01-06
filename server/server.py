@@ -131,11 +131,13 @@ def login():
               
         # ------Password correct ------
         if user and user.check_password(request.form.get('password')):
-            
-            if PROTECTION["captcha"] or (PROTECTION["lockout"] and not user.locked):
-                user.failed_login_attempts = 0
-                db.session.commit()
                 
+            if PROTECTION["lockout"] and  user.locked:
+                flash("Account is currently locked.")
+                return render_template('login.html'), 403
+                
+            user.failed_login_attempts = 0
+            db.session.commit()   
             totp_secret = util.get_secret_key(username)
             
             #Run TOTP after success 
@@ -159,21 +161,24 @@ def login():
         if user:
             
             user.update_failed_attempts()
+            db.session.commit()
             
             if PROTECTION["lockout"] and user.failed_login_attempts >= MAX_ATTEMPTS:
                 
                 user.is_locked(True)
-                    
+                db.session.commit()
+                
                 latency = (time.perf_counter() - start) * 1000
                 util.log_security_event(
                     username=username,
                     result='locked', 
                     latency_ms=latency)
+                
                 flash("Account locked due to too many failed attempts")
                 return render_template('login.html'), 429 
                 
         # DB update    
-        db.session.commit()
+        
          
         #------ Failure LOG -------       
         latency = (time.perf_counter() - start) * 1000
