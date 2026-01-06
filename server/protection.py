@@ -4,7 +4,7 @@ from datetime import datetime, timedelta
 # Configuration for rate-limit 
 MAX_TOKENS = 10       # Bucket capacity (Burst)
 REFILL_RATE = 1       # Tokens added per minute
-bucket_storage = {}   # In-memory storage: { ip: {"tokens": 10, "last_updated": datetime} }
+bucket_storage = {}   # In-memory storage: { user: {"tokens": 10, "last_updated": datetime} }
 
 
 def check_rate_limit(user):
