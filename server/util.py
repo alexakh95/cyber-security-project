@@ -124,14 +124,14 @@ def log_security_event(username,result,latency_ms):
     protect_type = ""
     for key, val in PROTECTION.items():
         if val:
-            protect_type = key
+            protect_type += key
     
     
     for key, val in ATTACK.items():
         if val :
             attack_type = key
-    
-    filename = f"{BASE_DIR.parent}/json_logs/logs_{HASH_METHOD}_{protect_type}_{attack_type}.json"
+    salt = "salt" if SALT else ""
+    filename = f"{BASE_DIR.parent}/json_logs/logs_{HASH_METHOD}_{salt}_{protect_type}_{attack_type}.json"
     
     log_entry = {
             "timestamp": datetime.utcnow().isoformat() + "Z",
