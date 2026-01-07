@@ -31,6 +31,8 @@ The arcitecture consists of three main components:
 **10 Medium Passwords** – Part or all of the username combined with digits.
 **10 Strong Passwords** – Randomly selected numbers and English letters (both uppercase and lowercase)
 
+## Design Explenation
+
 1. **Authentication server**  
 The server is responsible for: managing user registration and authentication,
 securely storing usernames and password hashes,enforcing curity and protection mechanism 
